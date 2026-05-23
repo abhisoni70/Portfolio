@@ -5,6 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Abhishek Soni — Python Full Stack Developer</title>
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap"
     rel="stylesheet" />
@@ -938,6 +940,10 @@
       background: linear-gradient(135deg, #2ecc71, #27ae60);
     }
 
+    .form-submit.error {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+
     /* FOOTER */
     footer {
       position: relative;
@@ -1516,20 +1522,20 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Your Name</label>
-          <input type="text" class="form-input" placeholder="John Doe" required />
+          <input type="text" name="from_name" class="form-input" placeholder="John Doe" required />
         </div>
         <div class="form-group">
           <label class="form-label">Your Email</label>
-          <input type="email" class="form-input" placeholder="john@email.com" required />
+          <input type="email" name="from_email" class="form-input" placeholder="john@email.com" required />
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Subject</label>
-        <input type="text" class="form-input" placeholder="Internship opportunity / Project collaboration / etc." />
+        <input type="text" name="subject" class="form-input" placeholder="Internship opportunity / Project collaboration / etc." />
       </div>
       <div class="form-group">
         <label class="form-label">Message</label>
-        <textarea class="form-textarea" placeholder="Tell me about the opportunity or project..."></textarea>
+        <textarea name="message" class="form-textarea" placeholder="Tell me about the opportunity or project..."></textarea>
       </div>
       <button type="submit" class="form-submit" id="submitBtn">Send Message ✦</button>
     </form>
@@ -1581,23 +1587,67 @@
     }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
+    // ─── EMAILJS CONFIG ───────────────────────────────────────────────
+    // Step 1: emailjs.com pe account banao (free)
+    // Step 2: Email Services > Add Service (Gmail) karo
+    // Step 3: Email Templates > Create Template karo (variables: {{from_name}}, {{from_email}}, {{subject}}, {{message}})
+    // Step 4: Neeche teen values replace karo:
+    const EMAILJS_PUBLIC_KEY   = '-KslH6e_7v7ZsUoW3';    // Account > API Keys
+    const EMAILJS_SERVICE_ID   = 'service_ynord8n';    // Email Services
+    const EMAILJS_TEMPLATE_ID  = 'template_qqhk9fr';   // Email Templates
+    // ─────────────────────────────────────────────────────────────────
+
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
     // CONTACT FORM
     const form = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
-    form.addEventListener('submit', e => {
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      // Validation — required fields
+      const nameVal    = form.querySelector('[name="from_name"]').value.trim();
+      const emailVal   = form.querySelector('[name="from_email"]').value.trim();
+      const messageVal = form.querySelector('[name="message"]').value.trim();
+
+      if (!nameVal || !emailVal || !messageVal) {
+        submitBtn.textContent = '⚠ Fill required fields';
+        submitBtn.classList.add('error');
+        setTimeout(() => {
+          submitBtn.textContent = 'Send Message ✦';
+          submitBtn.classList.remove('error');
+        }, 2500);
+        return;
+      }
+
       submitBtn.textContent = 'Sending...';
       submitBtn.disabled = true;
-      setTimeout(() => {
+
+      try {
+        await emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, form);
+
         submitBtn.textContent = '✓ Message Sent!';
         submitBtn.classList.add('sent');
         form.reset();
+
         setTimeout(() => {
           submitBtn.textContent = 'Send Message ✦';
           submitBtn.classList.remove('sent');
           submitBtn.disabled = false;
-        }, 3000);
-      }, 1500);
+        }, 3500);
+
+      } catch (err) {
+        console.error('EmailJS error:', err);
+        submitBtn.textContent = '✗ Failed — Try Again';
+        submitBtn.classList.add('error');
+        submitBtn.disabled = false;
+
+        setTimeout(() => {
+          submitBtn.textContent = 'Send Message ✦';
+          submitBtn.classList.remove('error');
+        }, 3500);
+      }
     });
   </script>
 </body>
